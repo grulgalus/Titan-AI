@@ -2,10 +2,6 @@ import os
 os.environ["DEV"] = "CPU"
 
 from tinygrad.tensor import Tensor
-from tinygrad.device import Device
-
-# Nejmodernější způsob TinyGradu pro Termux:
-Device.DEFAULT = "CPU"
 
 class TitanLLM:
     def __init__(self):
