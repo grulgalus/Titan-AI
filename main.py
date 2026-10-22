@@ -1,13 +1,18 @@
 import os
+
+# --- OPRAVA PRO TERMUX (TINYGRAD) ---
+# Tímto zakážeme hledání GPU a vynutíme počítání přes CPU
+os.environ["CPU"] = "1"
+os.environ["OPT"] = "0"
+
 from core.train import train_menu
 from core.chat import chat_menu
 from core.auto_train import auto_train_menu
 
 def install_menu():
-    print("\nInstaluji TinyGrad, Numpy a nástroje pro stahování...")
-    os.system("pkg install curl -y > /dev/null 2>&1")
+    print("\nInstaluji TinyGrad a Numpy pro Termux...")
     os.system("pip install tinygrad numpy")
-    print("\n[ÚSPĚCH] Systém je připraven na těžké Machine Learning operace.")
+    print("\n[ÚSPĚCH] Hotovo.")
 
 def main():
     while True:
@@ -26,7 +31,7 @@ def main():
         elif choice == "3": chat_menu()
         elif choice == "4": install_menu()
         elif choice == "5": break
-        else: print("Chyba výběru.")
+        else: print("Chyba.")
 
 if __name__ == "__main__":
     main()
