@@ -1,42 +1,61 @@
-import time
-from core.models import MODELS
-from memory.state_manager import load_state, save_state
-from utils.fs_ops import edit_file_permission
+import os
+import pickle
+import numpy as np
+from tinygrad.tensor import Tensor
+from core.model import TitanLLM
+
+AVAILABLE_MODELS = ["super_flash", "flash", "medium", "pro", "coder"]
+CONTEXT_SIZE = 8
 
 def chat_menu():
-    state = load_state()
-    print("\n--- [ CHAT MODE ] ---")
-    for key, model in MODELS.items():
-        print(f"[{key}] {model['name'].upper()} - {model['desc']}")
+    print("\n--- [ TINYGRAD INFERENCE MODE ] ---")
+    for i, name in enumerate(AVAILABLE_MODELS, 1):
+        print(f"[{i}] {name.upper()}")
     
     choice = input("\nVyber model (1-5): ")
-    if choice not in MODELS: return
+    try:
+        active_name = AVAILABLE_MODELS[int(choice) - 1]
+    except:
+        return print("Neplatná volba.")
+
+    model = TitanLLM()
+    model_path = f"memory/{active_name}.pkl"
     
-    active_model = MODELS[choice]["name"]
-    print(f"\nSpuštěn model: {active_model.upper()} (Napiš 'exit' pro konec, 'plan' pro uložení cílů)")
+    if os.path.exists(model_path):
+        with open(model_path, "rb") as f:
+            model.load_weights(pickle.load(f))
+        print(f"[!] Načteny natrénované váhy: {active_name.upper()}")
+    else:
+        print("[VAROVÁNÍ] Model má náhodné váhy! Bude psát odpad dokud nepoužiješ Train.")
 
     while True:
-        prompt = input(f"\n[{active_model}] Ty: ")
+        prompt = input(f"\n[{active_name}] Ty: ")
         if prompt.lower() == 'exit': break
-        elif prompt.lower() == 'plan':
-            plan = input("Zadej nový plán pro vývoj OS/AI: ")
-            state["plans"].append(plan)
-            state["progress"] += 5
-            save_state(state)
-            print("Plán úspěšně uložen do paměti.")
-            continue
 
-        print(f"[Titan_SI ({active_model}) zpracovává...]")
-        time.sleep(0.5)
+        # Sestavení kontextu pro model
+        context = prompt[-CONTEXT_SIZE:].ljust(CONTEXT_SIZE, " ")
         
-        # Logika Coder modelu
-        if active_model == "coder":
-            if any(word in prompt.lower() for word in ["make", "vytvoř", "napiš", "os", "kód", "win"]):
-                print(f"[{active_model}]: Generuji systémový kód. Vyžaduji potvrzení zápisu.")
-                edit_file_permission("kernel.c", "/* Jádro nového OS */\nvoid main() {\n    init_system();\n}")
-            else:
-                print(f"[{active_model}]: Jsem Coder. Jsem tu na psaní OS, ne na klábosení.")
-        else:
-            print(f"[{active_model}]: Rozumím. Zde je odpověď na tvůj požadavek: '{prompt}'")
-            state["memory"].append({"role": "user", "content": prompt})
-            save_state(state)
+        print(f"[{active_name} generuje...]: ", end="", flush=True)
+        
+        # Generujeme 60 znaků
+        for _ in range(60):
+            vec = np.zeros(CONTEXT_SIZE * 256, dtype=np.float32)
+            for i, char in enumerate(context):
+                vec[i * 256 + (ord(char) % 256)] = 1.0
+                
+            x = Tensor([vec])
+            logits = model.forward(x).numpy()[0]
+            
+            # Vyhodnocení predikce s teplotou (0.6 kreativita)
+            temp = 0.6
+            logits_max = np.max(logits) # Prevence exploze čísel
+            exp_preds = np.exp((logits - logits_max) / temp)
+            preds = exp_preds / np.sum(exp_preds)
+            
+            # Náhodný výběr podle pravděpodobnosti
+            char_idx = np.random.choice(256, p=preds)
+            char = chr(char_idx)
+            
+            print(char, end="", flush=True)
+            context = context[1:] + char
+        print()
