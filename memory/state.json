@@ -1,0 +1,18 @@
+{
+    "plans": [],
+    "memory": [
+        {
+            "role": "user",
+            "content": "ahoj"
+        },
+        {
+            "role": "user",
+            "content": "ahoj"
+        },
+        {
+            "role": "user",
+            "content": "ahoj"
+        }
+    ],
+    "progress": 110
+}
