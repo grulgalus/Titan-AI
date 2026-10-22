@@ -1,16 +1,15 @@
 import os
 
-# --- OPRAVA PRO TERMUX (TINYGRAD) ---
-# Tímto zakážeme hledání GPU a vynutíme počítání přes CPU
-os.environ["CPU"] = "1"
-os.environ["OPT"] = "0"
+# MODERNÍ TINYGRAD SYNTAXE
+# Zcela zahazujeme staré CPU=1, používáme výhradně DEV=CPU
+os.environ["DEV"] = "CPU"
 
 from core.train import train_menu
 from core.chat import chat_menu
 from core.auto_train import auto_train_menu
 
 def install_menu():
-    print("\nInstaluji TinyGrad a Numpy pro Termux...")
+    print("\nInstaluji nejnovější TinyGrad a Numpy pro Termux...")
     os.system("pip install tinygrad numpy")
     print("\n[ÚSPĚCH] Hotovo.")
 
