@@ -7,26 +7,18 @@ def setup_hardware():
     
     print("\n[SYSTÉM] Analyzuji dostupný hardware...")
     
-    # 1. EXKLUZIVNÍ SNAPDRAGON & ARM64 (TERMUX)
+    # 1. EXKLUZIVNÍ SNAPDRAGON (Z Flip 6 / Termux)
     if is_termux and arch == "aarch64":
         print("[!] Detekován ARM64 (Android/Termux).")
-        print("[!] Aktivuji exkluzivní Snapdragon patch (Anti-SIGILL)...")
-        # Zabráníme 'illegal hardware instruction' vynucením čisté ARMv8 sady!
-        # CFLAGS přepíše výchozí chování Clangu, aby nepoužíval zablokované SVE instrukce.
-        os.environ["CFLAGS"] = "-march=armv8-a -O2 -fPIC"
-        os.environ["DEV"] = "CPU"
-        os.environ["LIBC_PATH"] = "/system/lib64/libc.so"
-        print("[!] Výkon mobilního procesoru odemčen.\n")
+        print("[!] Aktivuji BEZPEČNÝ mód pro Snapdragon (Anti-SIGILL)...")
+        # Zcela zahodíme C kompilátor, který shazuje systém.
+        # Použijeme čistý PYTHON backend. Je neprůstřelný a nepadá!
+        os.environ["DEV"] = "PYTHON"
+        print("[!] Čistý výpočetní mód odemčen.\n")
         
-    # 2. KLASICKÝ PC / SERVER (x86_64)
-    elif arch in ["x86_64", "amd64"]:
-        print("[!] Detekován x86_64 (PC/Server).")
-        os.environ["DEV"] = "CPU"
-        print("[!] Nastaven klasický CPU backend.\n")
-        
-    # 3. OSTATNÍ ARCHITEKTURY (Fallback)
+    # 2. OSTATNÍ ARCHITEKTURY (Tablety / PC)
     else:
-        print(f"[!] Jiná architektura ({arch}), fallback na standardní CPU.")
+        print(f"[!] Detekováno ({arch}), používám standardní CPU backend.")
         os.environ["DEV"] = "CPU"
 
 # Spustíme detektor PŘED načtením TinyGradu!
@@ -37,8 +29,7 @@ from core.chat import chat_menu
 from core.auto_train import auto_train_menu
 
 def install_menu():
-    print("\nInstaluji nástroje pro Termux (TinyGrad, Numpy, Clang)...")
-    os.system("pkg install clang -y > /dev/null 2>&1")
+    print("\nInstaluji nástroje pro Termux (TinyGrad, Numpy)...")
     os.system("pip install tinygrad numpy")
     print("\n[ÚSPĚCH] Vše připraveno.")
 
