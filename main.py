@@ -1,27 +1,21 @@
 import os
-import platform
 
 def setup_hardware():
-    arch = platform.machine().lower()
-    is_termux = "PREFIX" in os.environ
+    # Zjistíme výrobce zařízení přímo ze systému Android
+    manufacturer = os.popen("getprop ro.product.manufacturer").read().strip().lower()
     
-    print("\n[SYSTÉM] Analyzuji dostupný hardware...")
+    print("\n[SYSTÉM] Analyzuji hardware...")
     
-    # 1. EXKLUZIVNÍ SNAPDRAGON (Z Flip 6 / Termux)
-    if is_termux and arch == "aarch64":
-        print("[!] Detekován ARM64 (Android/Termux).")
-        print("[!] Aktivuji BEZPEČNÝ mód pro Snapdragon (Anti-SIGILL)...")
-        # Zcela zahodíme C kompilátor, který shazuje systém.
-        # Použijeme čistý PYTHON backend. Je neprůstřelný a nepadá!
+    if "samsung" in manufacturer:
+        print(f"[!] Detekován {manufacturer.capitalize()} (Snapdragon).")
+        print("[!] Ochrana aktivní: Používám bezpečný PYTHON backend.")
         os.environ["DEV"] = "PYTHON"
-        print("[!] Čistý výpočetní mód odemčen.\n")
-        
-    # 2. OSTATNÍ ARCHITEKTURY (Tablety / PC)
     else:
-        print(f"[!] Detekováno ({arch}), používám standardní CPU backend.")
+        print(f"[!] Detekováno Lenovo/Tablet -> ARMv8.")
+        print("[!] Výkon odemčen: Používám nativní CPU backend.")
         os.environ["DEV"] = "CPU"
+        os.environ["LIBC_PATH"] = "/system/lib64/libc.so"
 
-# Spustíme detektor PŘED načtením TinyGradu!
 setup_hardware()
 
 from core.train import train_menu
@@ -29,13 +23,13 @@ from core.chat import chat_menu
 from core.auto_train import auto_train_menu
 
 def install_menu():
-    print("\nInstaluji nástroje pro Termux (TinyGrad, Numpy)...")
+    print("\nInstaluji nástroje pro Termux...")
     os.system("pip install tinygrad numpy")
-    print("\n[ÚSPĚCH] Vše připraveno.")
+    print("\n[ÚSPĚCH] Hotovo.")
 
 def main():
     while True:
-        print("===============================")
+        print("\n===============================")
         print(" TITAN SI - TINYGRAD ML ENGINE ")
         print("===============================")
         print("1. Train (Manuální data)")
@@ -50,7 +44,7 @@ def main():
         elif choice == "3": chat_menu()
         elif choice == "4": install_menu()
         elif choice == "5": break
-        else: print("Chyba výběru.")
+        else: print("Chyba.")
 
 if __name__ == "__main__":
     main()

@@ -15,41 +15,32 @@ def fetch_data():
     os.makedirs("workspace/datasets", exist_ok=True)
     print("\n-> Připravuji masivní tréninková data...")
     
-    # 1. Dataset pro Codera (Linux C kód)
-    c_code = "/* Titan Coder Dataset */\n#include <stdio.h>\nint main() {\n    printf(\"Hello, Titan!\\n\");\n    return 0;\n}\n" * 1500
-    with open("workspace/datasets/code.txt", "w", encoding="utf-8") as f:
-        f.write(c_code)
-        
-    # 2. VYSVĚTLENÍ PÁDŮ PŘÍMO V DATECH (Tohle AI fyzicky změní váhy v mozku)
     grammar = """
 [SYSTEM: ČESKÁ GRAMATIKA A PÁDY]
 Slova bez pádů znamenají slova v základním tvaru, tedy v 1. pádu (Nominativ).
 Čeština má 7 pádů:
 1. pád: Kdo, co? (Základ - např. hrad, žena, stroj)
-2. pád: Koho, čeho? (např. bez hradu, bez ženy)
-3. pád: Komu, čemu? (např. k hradu, k ženě)
-4. pád: Koho, co? (např. vidím hrad, ženu)
-5. pád: Oslovujeme, voláme! (např. hrade! ženo!)
-6. pád: O kom, o čem? (např. o hradu, o ženě)
-7. pád: S kým, čím? (např. s hradem, se ženou)
+2. pád: Koho, čeho?
+3. pád: Komu, čemu?
+4. pád: Koho, co?
+5. pád: Oslovujeme, voláme!
+6. pád: O kom, o čem?
+7. pád: S kým, čím?
 PRAVIDLO: Vždy generuj slova v 1. pádu (slova bez pádů).
-""" * 50  # Opakujeme lekci 50x, aby si ji AI silně zapamatovala!
+""" * 50
 
-    # 3. Stažení reálného, gigantického slovníku bez pádů (Lemmata)
     print("-> Stahuji obrovský český slovník (1. pády) z GitHub repozitáře...")
     url = "https://raw.githubusercontent.com/kkrypt0nn/wordlists/main/wordlists/languages/czech.txt"
     try:
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, timeout=10) as response:
             words = response.read().decode('utf-8')
-            print(f"[+] Úspěch! Staženo {len(words)} znaků čistých českých slov.")
+            print(f"[+] Úspěch! Staženo {len(words)} znaků čistých slov.")
     except Exception as e:
-        print(f"[!] Internet blokován ({e}). Vytvářím lokální masivní slovník.")
-        words = "dům auto strom řeka mrak obloha počítač mobil stůl židle pes kočka zvíře " * 5000
+        print(f"[!] Internet blokován ({e}).")
+        words = "dům auto strom řeka mrak obloha počítač mobil stůl židle pes " * 5000
 
-    # 4. Spojení gramatické učebnice a slovníku dohromady (Statisíce znaků dat!)
     full_text = (grammar + "\n[SLOVNÍK]:\n" + words[:150000]) * 3
-    
     with open("workspace/datasets/czech.txt", "w", encoding="utf-8") as f:
         f.write(full_text)
 
@@ -64,7 +55,7 @@ def get_batch(text, batch_size):
     return Tensor(X), Tensor(Y)
 
 def auto_train_menu():
-    print("\n--- [ AUTO PRE-TRAIN (MASIVNÍ UČENÍ) ] ---")
+    print("\n--- [ AUTO PRE-TRAIN ] ---")
     for i, name in enumerate(AVAILABLE_MODELS, 1):
         print(f"[{i}] {name.upper()}")
     
@@ -79,8 +70,6 @@ def auto_train_menu():
     dataset_path = "workspace/datasets/code.txt" if active_name == "coder" else "workspace/datasets/czech.txt"
     with open(dataset_path, "r", encoding="utf-8") as f:
         text = f.read()
-        
-    print(f"[!] Dataset načten: {len(text)} znaků k analýze.")
 
     model = TitanLLM()
     model_path = f"memory/{active_name}.pkl"
@@ -90,7 +79,7 @@ def auto_train_menu():
 
     optimizer = Adam([model.w1, model.b1, model.w2, model.b2], lr=0.01)
 
-    print("\nSpouštím Auto-Train na procesoru...")
+    print("\nSpouštím Auto-Train (Výpočet matic)...")
     epochs = 400
     try:
         with Context(TRAINING=1):
@@ -103,11 +92,13 @@ def auto_train_menu():
                 loss.backward()
                 optimizer.step()
                 
-                if epoch % 20 == 0:
-                    print(f"Epoch {epoch}/{epochs} | Ztráta sítě (Loss): {loss.numpy():.4f}")
+                # OPRAVA: Vypisujeme Ztrátu (Loss) KAŽDOU JEDNU EPOCHU!
+                # Tím donutíme grafickou/výpočetní kartu okamžitě vydat výsledek a nezamrzne to.
+                print(f"Epoch {epoch}/{epochs} | Ztráta sítě (Loss): {loss.numpy():.4f}")
+                
     except KeyboardInterrupt:
         print("\n[!] Trénink přerušen uživatelem.")
 
     with open(model_path, "wb") as f:
         pickle.dump(model.get_weights(), f)
-    print(f"\n[ÚSPĚCH] Synapse modelu ({active_name.upper()}) byly obohaceny o skutečnou gramatiku a uloženy!")
+    print(f"\n[ÚSPĚCH] Synapse byly uloženy!")
