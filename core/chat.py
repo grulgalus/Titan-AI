@@ -26,18 +26,19 @@ def chat_menu():
             model.load_weights(pickle.load(f))
         print(f"[!] Načteny natrénované váhy: {active_name.upper()}")
     else:
-        print("[VAROVÁNÍ] Model má náhodné váhy! Bude psát odpad.")
+        print("[VAROVÁNÍ] Model nemá natrénované váhy! Bude psát odpad.")
 
     while True:
         prompt = input(f"\n[{active_name}] Ty: ")
         if prompt.lower() == 'exit': break
 
+        # Vyplníme kontext mezerami, pokud je moc krátký
         context = prompt[-CONTEXT_SIZE:].ljust(CONTEXT_SIZE, " ")
         
         print(f"[{active_name} generuje...]: ", end="", flush=True)
         
         for _ in range(100):
-            # FIX: Vytvoříme rovnou 2D matici, už žádné seznamy!
+            # OPRAVA PRO TABLET: Vytvoříme rovnou čistou 2D matici
             vec = np.zeros((1, CONTEXT_SIZE * 256), dtype=np.float32)
             for i, char in enumerate(context):
                 vec[0, i * 256 + (ord(char) % 256)] = 1.0
@@ -45,11 +46,13 @@ def chat_menu():
             x = Tensor(vec)
             logits = model.forward(x).numpy()[0]
             
-            temp = 0.5 # Kreativita (čím menší, tím přesnější text)
+            # Vyhodnocení (0.5 je nižší kreativita = více se drží toho, co se naučil)
+            temp = 0.5 
             logits_max = np.max(logits)
             exp_preds = np.exp((logits - logits_max) / temp)
             preds = exp_preds / np.sum(exp_preds)
             
+            # Náhodný výběr podle pravděpodobností
             char_idx = np.random.choice(256, p=preds)
             char = chr(char_idx)
             
